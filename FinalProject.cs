@@ -1,20 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Management;
-using System.Runtime.InteropServices;
-using System.Threading;
+﻿using System;  
+using System.Collections.Generic;  
+using System.Diagnostics;  
+using System.Linq;  
+using System.Management;  
+using System.Runtime.InteropServices;   
+using System.Threading;  
 
-namespace WinOSProject
-{
+namespace WinOSProject        
+{  
     [StructLayout(LayoutKind.Sequential)]
     struct IO_COUNTERS
-    {
+    {  
         public ulong ReadOperationCount;
         public ulong WriteOperationCount;
         public ulong OtherOperationCount;
-        public ulong ReadTransferCount;
+        public ulong ReadTransferCount;  
         public ulong WriteTransferCount;
         public ulong OtherTransferCount;
     }
@@ -24,54 +24,54 @@ namespace WinOSProject
         public int    Id            { get; set; }
         public string Name          { get; set; } = "";
         public int    ArrivalTime   { get; set; }
-        public int    BurstTime     { get; set; }
+        public int    BurstTime     { get; set; }  
         public int    Priority      { get; set; }
-        public int    RemainingTime { get; set; }
+        public int    RemainingTime { get; set; }  
         public int    StartTime     { get; set; } = -1;
-        public int    FinishTime    { get; set; } = -1;
+        public int    FinishTime    { get; set; } = -1;  
 
         // waiting time = finish - arrival - burst
-        public int WaitingTime    => FinishTime - ArrivalTime - BurstTime;
-        public int TurnaroundTime => FinishTime - ArrivalTime;
-    }
+        public int WaitingTime    => FinishTime - ArrivalTime - BurstTime;        
+        public int TurnaroundTime => FinishTime - ArrivalTime;  
+    } 
 
-    class GanttEntry
-    {
-        public string Name  { get; set; } = "";
+    class GanttEntry  
+    {  
+        public string Name  { get; set; } = "";  
         public int    Start { get; set; }
-        public int    End   { get; set; }
+        public int    End   { get; set; }  
     }
 
     class FinalProject
     {
         [DllImport("kernel32.dll")]
-        static extern bool GetProcessIoCounters(IntPtr hProcess, out IO_COUNTERS lpIoCounters);
+        static extern bool GetProcessIoCounters(IntPtr hProcess, out IO_COUNTERS lpIoCounters);        
 
         static void Main()
         {
             while (true)
             {
                 Console.WriteLine();
-                PrintHeader("Windows Process Manager");
+                PrintHeader("Windows Process Manager");    
                 Console.WriteLine("  1  List processes");
-                Console.WriteLine("  2  Start a process");
+                Console.WriteLine("  2  Start a process");        
                 Console.WriteLine("  3  Kill a process by PID");
                 Console.WriteLine("  4  Change process priority by PID");
                 Console.WriteLine("  5  System resource dashboard");
-                Console.WriteLine("  6  CPU scheduling simulator");
+                Console.WriteLine("  6  CPU scheduling simulator");   
                 Console.WriteLine("  7  Exit");
                 Console.Write("Choose: ");
 
-                var choice = Console.ReadLine()?.Trim();
+                var choice = Console.ReadLine()?.Trim();        
 
                 if      (choice == "1") ListProcesses();
-                else if (choice == "2") StartProcess();
+                else if (choice == "2") StartProcess();        
                 else if (choice == "3") KillProcess();
                 else if (choice == "4") ChangePriority();
                 else if (choice == "5") ResourceDashboard();
                 else if (choice == "6") SchedulingSimulator();
                 else if (choice == "7") return;
-                else Console.WriteLine("Invalid choice");
+                else Console.WriteLine("Invalid choice");   
             }
         }
 
@@ -80,50 +80,50 @@ namespace WinOSProject
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("|---------------------------------------|");
             Console.WriteLine($"|  {title,-36}|");
-            Console.WriteLine("|---------------------------------------|");
+            Console.WriteLine("|---------------------------------------|");            
             Console.ResetColor();
         }
 
         static string Trunc(string s, int n)
         {
             if (string.IsNullOrEmpty(s)) return "";
-            return s.Length <= n ? s : s.Substring(0, n - 1) + ".";
+            return s.Length <= n ? s : s.Substring(0, n - 1) + ".";        
         }
 
-        static void Bar(double pct, int width = 30)
+        static void Bar(double pct, int width = 30) 
         {
-            int filled = (int)(pct / 100.0 * width);
-            filled = Math.Max(0, Math.Min(width, filled));
+            int filled = (int)(pct / 100.0 * width); 
+            filled = Math.Max(0, Math.Min(width, filled)); 
 
-            Console.ForegroundColor = pct > 80 ? ConsoleColor.Red
-                                    : pct > 50 ? ConsoleColor.Yellow
-                                               : ConsoleColor.Green;
-            Console.Write("[" + new string('#', filled) + new string('-', width - filled) + $"] {pct,5:F1}%");
+            Console.ForegroundColor = pct > 80 ? ConsoleColor.Red 
+                                    : pct > 50 ? ConsoleColor.Yellow 
+                                               : ConsoleColor.Green; 
+            Console.Write("[" + new string('#', filled) + new string('-', width - filled) + $"] {pct,5:F1}%"); 
             Console.ResetColor();
         }
 
         //1. List Processes
-        static void ListProcesses()
+        static void ListProcesses() 
         {
             var procs = Process.GetProcesses().OrderBy(p => p.ProcessName).ToList();
 
             Console.WriteLine();
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine($"{"PID",-7} {"Name",-28} {"Priority",-14} {"MemMB",8} {"ReadMB",9} {"WriteMB",9}");
-            Console.WriteLine(new string('-', 80));
+            Console.ForegroundColor = ConsoleColor.White;         
+            Console.WriteLine($"{"PID",-7} {"Name",-28} {"Priority",-14} {"MemMB",8} {"ReadMB",9} {"WriteMB",9}");   
+            Console.WriteLine(new string('-', 80));  
             Console.ResetColor();
 
             foreach (var p in procs)
             {
                 try
                 {
-                    double memMb  = p.WorkingSet64 / 1048576.0;
+                    double memMb  = p.WorkingSet64 / 1048576.0;        
                     double readMb = 0, writeMb = 0;
 
-                    if (GetProcessIoCounters(p.Handle, out IO_COUNTERS io))
+                    if (GetProcessIoCounters(p.Handle, out IO_COUNTERS io))                                    
                     {
-                        readMb  = io.ReadTransferCount  / 1048576.0;
-                        writeMb = io.WriteTransferCount / 1048576.0;
+                        readMb  = io.ReadTransferCount  / 1048576.0;           
+                        writeMb = io.WriteTransferCount / 1048576.0;    
                     }
 
                     Console.WriteLine($"{p.Id,-7} {Trunc(p.ProcessName, 28),-28} {p.PriorityClass,-14} " +
@@ -135,16 +135,16 @@ namespace WinOSProject
 
         // 2. Start Process
         static void StartProcess()
-        {
-            Console.Write("Enter full path or command (e.g. notepad): ");
+        {    
+            Console.Write("Enter full path or command (e.g. notepad): ");        
             var cmd = Console.ReadLine()?.Trim();
-            if (string.IsNullOrWhiteSpace(cmd)) return;
+            if (string.IsNullOrWhiteSpace(cmd)) return;        
 
-            try
+            try        
             {
                 var p = Process.Start(new ProcessStartInfo { FileName = cmd, UseShellExecute = true });
                 if (p != null) Console.WriteLine($"Started PID {p.Id}");
-            }
+            }        
             catch (Exception ex) { Console.WriteLine("Start failed: " + ex.Message); }
         }
 
@@ -152,25 +152,25 @@ namespace WinOSProject
         static void KillProcess()
         {
             Console.Write("Enter PID to kill: ");
-            if (!int.TryParse(Console.ReadLine(), out int pid)) { Console.WriteLine("Bad PID"); return; }
+            if (!int.TryParse(Console.ReadLine(), out int pid)) { Console.WriteLine("Bad PID"); return; }            
 
             try
             {
                 var p = Process.GetProcessById(pid);
-                Console.WriteLine($"Killing {p.ProcessName} PID {p.Id}");
+                Console.WriteLine($"Killing {p.ProcessName} PID {p.Id}");    
                 p.Kill(true);
                 Console.WriteLine("Killed.");
             }
-            catch (Exception ex) { Console.WriteLine("Kill failed: " + ex.Message); }
+            catch (Exception ex) { Console.WriteLine("Kill failed: " + ex.Message); }        
         }
 
         //4. Change Priority
-        static void ChangePriority()
+        static void ChangePriority()        
         {
             Console.Write("Enter PID: ");
             if (!int.TryParse(Console.ReadLine(), out int pid)) { Console.WriteLine("Bad PID"); return; }
 
-            Console.WriteLine("Priorities: Idle, BelowNormal, Normal, AboveNormal, High, RealTime");
+            Console.WriteLine("Priorities: Idle, BelowNormal, Normal, AboveNormal, High, RealTime");                
             Console.Write("Priority: ");
             var priStr = Console.ReadLine()?.Trim();
 
@@ -199,9 +199,9 @@ namespace WinOSProject
             cpuCounter.NextValue();
             Thread.Sleep(500);
 
-            for (int i = 0; i < iterations; i++)
+            for (int i = 0; i < iterations; i++)                
             {
-                if (live)
+                if (live)                
                 {
                     Console.Clear();
                     Console.SetCursorPosition(0, 0);
@@ -211,21 +211,21 @@ namespace WinOSProject
 
                 //CPU
                 float cpu = cpuCounter.NextValue();
-                Console.Write("  CPU Usage   : ");
+                Console.Write("  CPU Usage   : ");        
                 Bar(cpu);
-                Console.WriteLine();
+                Console.WriteLine();        
 
                 //RAM
                 // WMI returns KB so divide by 1024 to get MB
                 double totalRam = 0, availRam = 0;
                 try
                 {
-                    using var searcher = new ManagementObjectSearcher(
-                        "SELECT TotalVisibleMemorySize, FreePhysicalMemory FROM Win32_OperatingSystem");
+                    using var searcher = new ManagementObjectSearcher(        
+                        "SELECT TotalVisibleMemorySize, FreePhysicalMemory FROM Win32_OperatingSystem");        
                     foreach (ManagementObject obj in searcher.Get())
                     {
                         totalRam = Convert.ToDouble(obj["TotalVisibleMemorySize"]) / 1024.0;
-                        availRam = Convert.ToDouble(obj["FreePhysicalMemory"])     / 1024.0;
+                        availRam = Convert.ToDouble(obj["FreePhysicalMemory"])     / 1024.0;            
                     }
                 }
                 catch { }
@@ -490,67 +490,67 @@ namespace WinOSProject
         static void PrintGantt(List<GanttEntry> gantt)
         {
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("Gantt Chart:");
-            Console.ResetColor();
+            Console.WriteLine("Gantt Chart:");  
+            Console.ResetColor();  
 
-            Console.Write("  ");
+            Console.Write("  ");  
             foreach (var e in gantt)
-                Console.Write("+" + new string('-', e.End - e.Start));
-            Console.WriteLine("+");
-
+                Console.Write("+" + new string('-', e.End - e.Start));  
+            Console.WriteLine("+");  
+ 
             Console.Write("  ");
-            foreach (var e in gantt)
+            foreach (var e in gantt)  
             {
-                int w     = e.End - e.Start;
+                int w     = e.End - e.Start;  
                 string lbl = e.Name.Length <= w ? e.Name.PadRight(w) : e.Name.Substring(0, w);
-                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.ForegroundColor = ConsoleColor.Yellow;  
                 Console.Write("|" + lbl);
                 Console.ResetColor();
             }
             Console.WriteLine("|");
 
-            Console.Write("  ");
-            foreach (var e in gantt)
-                Console.Write("+" + new string('-', e.End - e.Start));
-            Console.WriteLine("+");
+            Console.Write("  ");        
+            foreach (var e in gantt)  
+                Console.Write("+" + new string('-', e.End - e.Start));        
+            Console.WriteLine("+");   
 
-            // time row - spacing gets a little off when times are 2+ digits, known issue
-            Console.Write("  " + gantt.First().Start);
-            foreach (var e in gantt)
+            // time row - spacing gets a little off when times are 2+ digits        
+            Console.Write("  " + gantt.First().Start);   
+            foreach (var e in gantt)        
             {
-                int w = e.End - e.Start;
-                Console.Write(e.End.ToString().PadLeft(w + 1));
+                int w = e.End - e.Start;   
+                Console.Write(e.End.ToString().PadLeft(w + 1));        
             }
-            Console.WriteLine();
+            Console.WriteLine();   
         }
 
-        //Stats table
-        static void PrintStats(List<SimProcess> procs, int totalCount)
+        //Stats table        
+        static void PrintStats(List<SimProcess> procs, int totalCount)  
         {
-            Console.WriteLine();
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine($"  {"Process",-10} {"Arrival",8} {"Burst",7} {"Start",7} {"Finish",8} {"Wait",6} {"TAT",6}");
-            Console.WriteLine("  " + new string('-', 58));
-            Console.ResetColor();
+            Console.WriteLine();  
+            Console.ForegroundColor = ConsoleColor.White;  
+            Console.WriteLine($"  {"Process",-10} {"Arrival",8} {"Burst",7} {"Start",7} {"Finish",8} {"Wait",6} {"TAT",6}");  
+            Console.WriteLine("  " + new string('-', 58));  
+            Console.ResetColor();  
 
-            double totalWait = 0, totalTAT = 0;
+            double totalWait = 0, totalTAT = 0;  
 
-            foreach (var p in procs.OrderBy(x => x.Id))
+            foreach (var p in procs.OrderBy(x => x.Id))  
             {
-                if (p.FinishTime < 0) continue;
-                Console.WriteLine($"  {p.Name,-10} {p.ArrivalTime,8} {p.BurstTime,7} " +
-                                  $"{p.StartTime,7} {p.FinishTime,8} {p.WaitingTime,6} {p.TurnaroundTime,6}");
-                totalWait += p.WaitingTime;
-                totalTAT  += p.TurnaroundTime;
+                if (p.FinishTime < 0) continue;  
+                Console.WriteLine($"  {p.Name,-10} {p.ArrivalTime,8} {p.BurstTime,7} " +  
+                                  $"{p.StartTime,7} {p.FinishTime,8} {p.WaitingTime,6} {p.TurnaroundTime,6}");  
+                totalWait += p.WaitingTime;  
+                totalTAT  += p.TurnaroundTime;  
             }
 
-            Console.WriteLine();
-            Console.ForegroundColor = ConsoleColor.Green;
-            // dividing by totalCount (the number the user entered) instead of actual finished count
-            // works fine in normal cases, but would be slightly off if a process somehow didnt finish
-            Console.WriteLine($"  Avg Waiting Time    : {totalWait / totalCount:F2}");
-            Console.WriteLine($"  Avg Turnaround Time : {totalTAT  / totalCount:F2}");
-            Console.ResetColor();
+            Console.WriteLine();  
+            Console.ForegroundColor = ConsoleColor.Green;  
+            // dividing by totalCount     
+            // works fine in normal cases    
+            Console.WriteLine($"  Avg Waiting Time    : {totalWait / totalCount:F2}"); 
+            Console.WriteLine($"  Avg Turnaround Time : {totalTAT  / totalCount:F2}"); 
+            Console.ResetColor(); 
         }
     }
 }
